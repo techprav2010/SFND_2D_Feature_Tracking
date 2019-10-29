@@ -77,27 +77,27 @@ void log(ofstream &detector_file, AuditLog &audit) {
 
     detector_file << "{" << endl;
 
-    detector_file << "isError:" << audit.isError << endl;
-    detector_file << "image_name:" << audit.image_name << endl;
-    detector_file << "detectorType:" << audit.config.detectorType << endl;
-    detector_file << "descriptorType:" << audit.config.descriptorType << endl;
-    detector_file << "matcherType:" << audit.config.matcherType << endl;
+    detector_file << "'isError':'" << audit.isError << "'," << endl;
+    detector_file << "'image_name':'" << audit.image_name  << "'," << endl;
+    detector_file << "'detectorType':'" << audit.config.detectorType << "'," << endl;
+    detector_file << "'descriptorType':'" << audit.config.descriptorType  << "'," << endl;
+    detector_file << "'matcherType':'" << audit.config.matcherType  << "'," << endl;
 
-    detector_file << "matcherTypeMetric:" << audit.config.matcherTypeMetric << endl;
-    detector_file << "matcherTypeSelector:" << audit.config.matcherTypeSelector << endl;
+    detector_file << "'matcherTypeMetric':'" << audit.config.matcherTypeMetric << "'," << endl;
+    detector_file << "'matcherTypeSelector':'" << audit.config.matcherTypeSelector  << "'," << endl;
 
-    detector_file << "detect_time:" << audit.detect_time << endl;
-    detector_file << "desc_time:" << audit.desc_time << endl;
-    detector_file << "match_time:" << audit.match_time << endl;
+    detector_file << "'detect_time_ms':" << audit.detect_time << "," << endl;
+    detector_file << "'desc_time_ms':" << audit.desc_time << "," << endl;
+    detector_file << "'match_time_ms':" << audit.match_time << "," << endl;
 
-    detector_file << "detect_keypoints_size:" << audit.detect_keypoints_size << endl;
-    detector_file << "match_keypoints_size:" << audit.match_keypoints_size << endl;
-    detector_file << "match_removed_keypoints_size:" << audit.match_removed_keypoints_size << endl;
+    detector_file << "'detect_keypoints_size':" << audit.detect_keypoints_size << "," << endl;
+    detector_file << "'match_keypoints_size':" << audit.match_keypoints_size << "," << endl;
+    detector_file << "'match_removed_keypoints_size':" << audit.match_removed_keypoints_size << "," << endl;
 
 
-    detector_file << "bVis:" << audit.config.bVis << endl;
-    detector_file << "bLimitKpts:" << audit.config.bLimitKpts << endl;
-    detector_file << "maxKeypoints:" << audit.config.maxKeypoints << endl;
+    detector_file << "'bVis':" << audit.config.bVis  << "," << endl;
+    detector_file << "'bLimitKpts':" << audit.config.bLimitKpts  << "," << endl;
+    detector_file << "'maxKeypoints':" << audit.config.maxKeypoints  << "," << endl;
 
     detector_file << "}," << endl;
 }
@@ -382,7 +382,7 @@ int main(int argc, const char *argv[]) {
 
     ofstream detector_file_json;
     detector_file_json.open("../results.json");
-    detector_file_json << "{" << endl;
+    detector_file_json << "[" << endl;
 
     bool singleTest = false;
     //int run_2D_tracking(Config2DFeatTrack &config, vector<AuditLog> &audits)
@@ -410,7 +410,7 @@ int main(int argc, const char *argv[]) {
     }
 
 //    log_audits(audits);
-    detector_file_json << "}" << endl;
+    detector_file_json << "]" << endl;
     detector_file.close();
     detector_file_json.close();
 }
