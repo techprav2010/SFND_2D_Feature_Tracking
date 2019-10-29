@@ -384,7 +384,10 @@ int main(int argc, const char *argv[]) {
     detector_file_json.open("../results.json");
     detector_file_json << "[" << endl;
 
+    // for testing one set of algorithms use singleTest = true
+    //singleTest = false will test all combinations
     bool singleTest = false;
+
     //int run_2D_tracking(Config2DFeatTrack &config, vector<AuditLog> &audits)
     vector<Config2DFeatTrack> configList = getConfig(singleTest);
     vector<AuditLog> audits;
