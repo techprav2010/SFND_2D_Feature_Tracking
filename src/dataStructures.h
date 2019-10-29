@@ -29,10 +29,13 @@ struct Config2DFeatTrack {
 
 struct AuditLog {
     Config2DFeatTrack config ;
-    std::string image_name;
-    bool isError=false;
-    long match_time, match_keypoints_size, match_removed_keypoints_size;
-    long desc_time;
-    long detect_time, detect_keypoints_size, detect_removed_keypoints_size;
+    std::string image_name ="";
+    bool isError = false;
+    long match_time = 0;
+    long match_keypoints_size = 0;
+    long match_removed_keypoints_size = 0;
+    long desc_time  = 0;
+    long detect_time = 0;
+    long detect_keypoints_size = 0;
 };
 #endif /* dataStructures_h */
