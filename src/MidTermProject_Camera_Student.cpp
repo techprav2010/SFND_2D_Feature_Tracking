@@ -85,14 +85,13 @@ void log(ofstream &detector_file, AuditLog &audit) {
     detector_file << "matcherTypeMetric:" << audit.config.matcherTypeMetric << endl;
     detector_file << "matcherTypeSelector:" << audit.config.matcherTypeSelector << endl;
 
+    detector_file << "detect_time:" << audit.detect_time << endl;
+    detector_file << "desc_time:" << audit.desc_time << endl;
     detector_file << "match_time:" << audit.match_time << endl;
+
+    detector_file << "detect_keypoints_size:" << audit.detect_keypoints_size << endl;
     detector_file << "match_keypoints_size:" << audit.match_keypoints_size << endl;
     detector_file << "match_removed_keypoints_size:" << audit.match_removed_keypoints_size << endl;
-
-    detector_file << "desc_time:" << audit.desc_time << endl;
-
-    detector_file << "detect_time:" << audit.detect_time << endl;
-    detector_file << "detect_keypoints_size:" << audit.detect_keypoints_size << endl;
 
 
     detector_file << "bVis:" << audit.config.bVis << endl;
@@ -112,14 +111,13 @@ void log_audit_header(ofstream &detector_file) {
     detector_file << "," << "matcherTypeMetric";
     detector_file << "," << "matcherTypeSelector";
 
+    detector_file << "," << "detect_time";
+    detector_file << "," << "desc_time";
     detector_file << "," << "match_time";
+
+    detector_file << "," << "detect_keypoints_size" ;
     detector_file << "," << "match_keypoints_size";
     detector_file << "," << "match_removed_keypoints_size";
-
-    detector_file << "," << "desc_time";
-
-    detector_file << "," << "detect_time";
-    detector_file << "," << "detect_keypoints_size" ;
 
     detector_file << "," << "bVis";
     detector_file << "," << "bLimitKpts";
@@ -138,15 +136,13 @@ void log_audit(ofstream &detector_file, AuditLog &audit) {
     detector_file << "," << audit.config.matcherTypeMetric;
     detector_file << "," << audit.config.matcherTypeSelector;
 
-
+    detector_file << "," << audit.detect_time;
+    detector_file << "," << audit.desc_time;
     detector_file << "," << audit.match_time;
+
+    detector_file << "," << audit.detect_keypoints_size ;
     detector_file << "," << audit.match_keypoints_size;
     detector_file << "," << audit.match_removed_keypoints_size;
-
-    detector_file << "," << audit.desc_time;
-
-    detector_file << "," << audit.detect_time;
-    detector_file << "," << audit.detect_keypoints_size ;
 
     detector_file << "," << audit.config.bVis;
     detector_file << "," << audit.config.bLimitKpts;
