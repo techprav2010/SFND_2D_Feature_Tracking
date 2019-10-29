@@ -163,10 +163,9 @@ void log_audit(ofstream &detector_file, AuditLog &audit) {
 //}
 
 /* MAIN PROGRAM */
-int run_2D_tracking(Config2DFeatTrack &config2d, AuditLog &audit) {
+int run_2D_tracking(Config2DFeatTrack &config2d, vector<AuditLog> audits, ofstream &detector_file_json, ofstream &detector_file) {
 
     /* INIT VARIABLES AND DATA STRUCTURES */
-
 
     // data location
     string dataPath = "../";
@@ -188,159 +187,181 @@ int run_2D_tracking(Config2DFeatTrack &config2d, AuditLog &audit) {
 
     for (size_t imgIndex = 0; imgIndex <= imgEndIndex - imgStartIndex; imgIndex++) {
         /* LOAD IMAGE INTO BUFFER */
+        AuditLog audit;
+        audit.config = config2d;
+        audits.push_back(audit);
 
-        // assemble filenames for current index
-        ostringstream imgNumber;
-        imgNumber << setfill('0') << setw(imgFillWidth) << imgStartIndex + imgIndex;
-        string imgFullFilename = imgBasePath + imgPrefix + imgNumber.str() + imgFileType;
+        try {
 
-        // load image from file and convert to grayscale
-        cv::Mat img, imgGray;
-        img = cv::imread(imgFullFilename);
-        cv::cvtColor(img, imgGray, cv::COLOR_BGR2GRAY);
+            // assemble filenames for current index
+            ostringstream imgNumber;
+            imgNumber << setfill('0') << setw(imgFillWidth) << imgStartIndex + imgIndex;
+            string imgFullFilename = imgBasePath + imgPrefix + imgNumber.str() + imgFileType;
 
-        //audit
-        audit.image_name = imgFullFilename;
-        //// STUDENT ASSIGNMENT
-        //// TASK MP.1 -> replace the following code with ring buffer of size dataBufferSize
+            // load image from file and convert to grayscale
+            cv::Mat img, imgGray;
+            img = cv::imread(imgFullFilename);
+            cv::cvtColor(img, imgGray, cv::COLOR_BGR2GRAY);
 
-        // push image into data frame buffer
-        DataFrame frame;
-        frame.cameraImg = imgGray;
-        dataBuffer.push_back(frame);
-        if (dataBuffer.size() > dataBufferSize) {
-            cout << "dataBuffer size before removal is =" << dataBuffer.size() << endl;
-            dataBuffer.erase(dataBuffer.begin());
-        }
-        cout << "#1 : LOAD IMAGE INTO BUFFER done. dataBuffer size is =" << dataBuffer.size() << endl;
-
-        //// EOF STUDENT ASSIGNMENT
-
-
-        /* DETECT IMAGE KEYPOINTS */
-
-        // extract 2D keypoints from current image
-        vector<cv::KeyPoint> keypoints; // create empty feature list for current image
-        string detectorType = config2d.detectorType;//"SHITOMASI";
-
-        //// STUDENT ASSIGNMENT
-        //// TASK MP.2 -> add the following keypoint detectors in file matching2D.cpp and enable string-based selection based on detectorType
-        //// -> HARRIS, FAST, BRISK, ORB, AKAZE, SIFT
-        std::vector<string> detectors{"SHITOMASI", "HARRIS", "FAST", "BRISK", "ORB", "AKAZE", "SIFT"};
-        if (std::find(detectors.begin(), detectors.end(), detectorType) != detectors.end()) {
-            cout << "detectorType " << detectorType << endl;
-        } else {
-            cout << "Invalid detectorType " << detectorType << endl;
-            return -1;
-        }
-
-        if (detectorType.compare("SHITOMASI") == 0) {
-            detKeypointsShiTomasi(keypoints, imgGray, config2d, audit, false);
-        } else if (detectorType.compare("HARRIS") == 0) {
-            detKeypointsHarris(keypoints, imgGray, config2d, audit, false);
-        } else {
-            // FAST, BRISK, ORB, AKAZE, SIFT
-            detKeypointsModern(keypoints, imgGray, detectorType, config2d, audit, false);
-        }
-        //// EOF STUDENT ASSIGNMENT
-
-        //// STUDENT ASSIGNMENT
-        //// TASK MP.3 -> only keep keypoints on the preceding vehicle
-
-        // only keep keypoints on the preceding vehicle
-        bool bFocusOnVehicle = true;
-        cv::Rect vehicleRect(535, 180, 180, 150);
-        if (bFocusOnVehicle) {
-            vector<cv::KeyPoint> keypointsRoi;
-            for (auto it = keypoints.begin(); it != keypoints.end(); ++it) {
-                if (vehicleRect.contains(it->pt)) {
-                    keypointsRoi.push_back((*it));
-                }
-            }
-            keypoints = keypointsRoi;
-        }
-
-        //// EOF STUDENT ASSIGNMENT
-
-        // optional : limit number of keypoints (helpful for debugging and learning)
-        bool bLimitKpts = config2d.bLimitKpts;//false;
-        if (bLimitKpts) {
-            int maxKeypoints = config2d.maxKeypoints;// 50;
-
-            if (detectorType.compare("SHITOMASI") ==
-                0) { // there is no response info, so keep the first 50 as they are sorted in descending quality order
-                keypoints.erase(keypoints.begin() + maxKeypoints, keypoints.end());
-            }
-            cv::KeyPointsFilter::retainBest(keypoints, maxKeypoints);
-            cout << " NOTE: Keypoints have been limited!" << endl;
-        }
-
-        // push keypoints and descriptor for current frame to end of data buffer
-        (dataBuffer.end() - 1)->keypoints = keypoints;
-        cout << "#2 : DETECT KEYPOINTS done" << endl;
-
-        /* EXTRACT KEYPOINT DESCRIPTORS */
-
-        //// STUDENT ASSIGNMENT
-        //// TASK MP.4 -> add the following descriptors in file matching2D.cpp and enable string-based selection based on descriptorType
-        //// -> BRIEF, ORB, FREAK, AKAZE, SIFT
-
-        cv::Mat descriptors;
-        string descriptorType = "BRISK"; // BRIEF, ORB, FREAK, AKAZE, SIFT
-        descKeypoints((dataBuffer.end() - 1)->keypoints, (dataBuffer.end() - 1)->cameraImg, descriptors, descriptorType,
-                      config2d, audit);
-        //// EOF STUDENT ASSIGNMENT
-
-        // push descriptors for current frame to end of data buffer
-        (dataBuffer.end() - 1)->descriptors = descriptors;
-
-        cout << "#3 : EXTRACT DESCRIPTORS done" << endl;
-
-        if (dataBuffer.size() > 1) // wait until at least two images have been processed
-        {
-
-            /* MATCH KEYPOINT DESCRIPTORS */
-
-            vector<cv::DMatch> matches;
-
-            string matcherType = config2d.matcherType;//"MAT_BF";        // MAT_BF, MAT_FLANN
-            string descriptorType = config2d.matcherTypeMetric;//"DES_BINARY"; // DES_BINARY, DES_HOG
-            string selectorType = config2d.matcherTypeSelector;//"SEL_NN";       // SEL_NN, SEL_KNN
-
+            //audit
+            audit.image_name = imgFullFilename;
             //// STUDENT ASSIGNMENT
-            //// TASK MP.5 -> add FLANN matching in file matching2D.cpp
-            //// TASK MP.6 -> add KNN match selection and perform descriptor distance ratio filtering with t=0.8 in file matching2D.cpp
+            //// TASK MP.1 -> replace the following code with ring buffer of size dataBufferSize
 
-            matchDescriptors((dataBuffer.end() - 2)->keypoints, (dataBuffer.end() - 1)->keypoints,
-                             (dataBuffer.end() - 2)->descriptors, (dataBuffer.end() - 1)->descriptors,
-                             matches, descriptorType, matcherType, selectorType, config2d, audit);
+            // push image into data frame buffer
+            DataFrame frame;
+            frame.cameraImg = imgGray;
+            dataBuffer.push_back(frame);
+            if (dataBuffer.size() > dataBufferSize) {
+                cout << "dataBuffer size before removal is =" << dataBuffer.size() << endl;
+                dataBuffer.erase(dataBuffer.begin());
+            }
+            cout << "#1 : LOAD IMAGE INTO BUFFER done. dataBuffer size is =" << dataBuffer.size() << endl;
 
             //// EOF STUDENT ASSIGNMENT
 
-            // store matches in current data frame
-            (dataBuffer.end() - 1)->kptMatches = matches;
 
-            cout << "#4 : MATCH KEYPOINT DESCRIPTORS done" << endl;
+            /* DETECT IMAGE KEYPOINTS */
 
-            // visualize matches between current and previous image
-            bVis = config2d.bVis; //true;
-            if (bVis) {
-                cv::Mat matchImg = ((dataBuffer.end() - 1)->cameraImg).clone();
-                cv::drawMatches((dataBuffer.end() - 2)->cameraImg, (dataBuffer.end() - 2)->keypoints,
-                                (dataBuffer.end() - 1)->cameraImg, (dataBuffer.end() - 1)->keypoints,
-                                matches, matchImg,
-                                cv::Scalar::all(-1), cv::Scalar::all(-1),
-                                vector<char>(), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+            // extract 2D keypoints from current image
+            vector<cv::KeyPoint> keypoints; // create empty feature list for current image
+            string detectorType = config2d.detectorType;//"SHITOMASI";
 
-                string windowName = "Matching keypoints between two camera images";
-                cv::namedWindow(windowName, 7);
-                cv::imshow(windowName, matchImg);
-                cout << "Press key to continue to next image" << endl;
-                cv::waitKey(0); // wait for key to be pressed
+            //// STUDENT ASSIGNMENT
+            //// TASK MP.2 -> add the following keypoint detectors in file matching2D.cpp and enable string-based selection based on detectorType
+            //// -> HARRIS, FAST, BRISK, ORB, AKAZE, SIFT
+            std::vector<string> detectors{"SHITOMASI", "HARRIS", "FAST", "BRISK", "ORB", "AKAZE", "SIFT"};
+            if (std::find(detectors.begin(), detectors.end(), detectorType) != detectors.end()) {
+                cout << "detectorType " << detectorType << endl;
+            } else {
+                cout << "Invalid detectorType " << detectorType << endl;
+                return -1;
             }
-            bVis = false;
-        }
 
+            if (detectorType.compare("SHITOMASI") == 0) {
+                detKeypointsShiTomasi(keypoints, imgGray, config2d, audit, false);
+            } else if (detectorType.compare("HARRIS") == 0) {
+                detKeypointsHarris(keypoints, imgGray, config2d, audit, false);
+            } else {
+                // FAST, BRISK, ORB, AKAZE, SIFT
+                detKeypointsModern(keypoints, imgGray, detectorType, config2d, audit, false);
+            }
+            //// EOF STUDENT ASSIGNMENT
+
+            //// STUDENT ASSIGNMENT
+            //// TASK MP.3 -> only keep keypoints on the preceding vehicle
+
+            // only keep keypoints on the preceding vehicle
+            bool bFocusOnVehicle = true;
+            cv::Rect vehicleRect(535, 180, 180, 150);
+            if (bFocusOnVehicle) {
+                vector<cv::KeyPoint> keypointsRoi;
+                for (auto it = keypoints.begin(); it != keypoints.end(); ++it) {
+                    if (vehicleRect.contains(it->pt)) {
+                        keypointsRoi.push_back((*it));
+                    }
+                }
+                keypoints = keypointsRoi;
+            }
+
+            //// EOF STUDENT ASSIGNMENT
+
+            // optional : limit number of keypoints (helpful for debugging and learning)
+            bool bLimitKpts = config2d.bLimitKpts;//false;
+            if (bLimitKpts) {
+                int maxKeypoints = config2d.maxKeypoints;// 50;
+
+                if (detectorType.compare("SHITOMASI") ==
+                    0) { // there is no response info, so keep the first 50 as they are sorted in descending quality order
+                    keypoints.erase(keypoints.begin() + maxKeypoints, keypoints.end());
+                }
+                cv::KeyPointsFilter::retainBest(keypoints, maxKeypoints);
+                cout << " NOTE: Keypoints have been limited!" << endl;
+            }
+
+            // push keypoints and descriptor for current frame to end of data buffer
+            (dataBuffer.end() - 1)->keypoints = keypoints;
+            cout << "#2 : DETECT KEYPOINTS done" << endl;
+
+            /* EXTRACT KEYPOINT DESCRIPTORS */
+
+            //// STUDENT ASSIGNMENT
+            //// TASK MP.4 -> add the following descriptors in file matching2D.cpp and enable string-based selection based on descriptorType
+            //// -> BRIEF, ORB, FREAK, AKAZE, SIFT
+
+            cv::Mat descriptors;
+            string descriptorType = "BRISK"; // BRIEF, ORB, FREAK, AKAZE, SIFT
+            descKeypoints((dataBuffer.end() - 1)->keypoints, (dataBuffer.end() - 1)->cameraImg, descriptors, descriptorType,
+                          config2d, audit);
+            //// EOF STUDENT ASSIGNMENT
+
+            // push descriptors for current frame to end of data buffer
+            (dataBuffer.end() - 1)->descriptors = descriptors;
+
+            cout << "#3 : EXTRACT DESCRIPTORS done" << endl;
+
+            if (dataBuffer.size() > 1) // wait until at least two images have been processed
+            {
+
+                /* MATCH KEYPOINT DESCRIPTORS */
+
+                vector<cv::DMatch> matches;
+
+                string matcherType = config2d.matcherType;//"MAT_BF";        // MAT_BF, MAT_FLANN
+                string descriptorType = config2d.matcherTypeMetric;//"DES_BINARY"; // DES_BINARY, DES_HOG
+                string selectorType = config2d.matcherTypeSelector;//"SEL_NN";       // SEL_NN, SEL_KNN
+
+                //// STUDENT ASSIGNMENT
+                //// TASK MP.5 -> add FLANN matching in file matching2D.cpp
+                //// TASK MP.6 -> add KNN match selection and perform descriptor distance ratio filtering with t=0.8 in file matching2D.cpp
+
+                matchDescriptors((dataBuffer.end() - 2)->keypoints, (dataBuffer.end() - 1)->keypoints,
+                                 (dataBuffer.end() - 2)->descriptors, (dataBuffer.end() - 1)->descriptors,
+                                 matches, descriptorType, matcherType, selectorType, config2d, audit);
+
+                //// EOF STUDENT ASSIGNMENT
+
+                // store matches in current data frame
+                (dataBuffer.end() - 1)->kptMatches = matches;
+
+                cout << "#4 : MATCH KEYPOINT DESCRIPTORS done" << endl;
+
+                // visualize matches between current and previous image
+                bVis = config2d.bVis; //true;
+                if (bVis) {
+                    cv::Mat matchImg = ((dataBuffer.end() - 1)->cameraImg).clone();
+                    cv::drawMatches((dataBuffer.end() - 2)->cameraImg, (dataBuffer.end() - 2)->keypoints,
+                                    (dataBuffer.end() - 1)->cameraImg, (dataBuffer.end() - 1)->keypoints,
+                                    matches, matchImg,
+                                    cv::Scalar::all(-1), cv::Scalar::all(-1),
+                                    vector<char>(), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+
+                    string windowName = "Matching keypoints between two camera images";
+                    cv::namedWindow(windowName, 7);
+                    cv::imshow(windowName, matchImg);
+                    cout << "Press key to continue to next image" << endl;
+                    cv::waitKey(0); // wait for key to be pressed
+                }
+                bVis = false;
+            }
+
+
+        } catch (...) {
+            cout << "exception happened" << endl;
+            audit.isError = true;
+            log(detector_file_json, audit);
+            log_audit(detector_file, audit);
+            try
+            {
+                auto expPtr = std::current_exception();
+                if(expPtr) std::rethrow_exception(expPtr);
+            }
+            catch(const std::exception& e) //it would not work if you pass by value
+            {
+                cout << "exception ??? " ;
+                std::cout << e.what() << endl;
+            }
+        }
     } // eof loop over all images
 
     return 0;
@@ -364,18 +385,10 @@ int main(int argc, const char *argv[]) {
 
 
     for (auto config2d = configList.begin(); config2d != configList.end(); ++config2d) {
-        AuditLog audit;
-        audit.config = (*config2d);
-        audits.push_back(audit);
         try {
-            run_2D_tracking((*config2d), audit);
-            log(detector_file_json, audit);
-            log_audit(detector_file, audit);
+            run_2D_tracking((*config2d), audits, detector_file_json, detector_file);
         } catch (...) {
-            cout << "exception happened" << endl;
-            audit.isError = true;
-            log(detector_file_json, audit);
-            log_audit(detector_file, audit);
+            cout << "exception happened main " << endl;
             try
             {
                 auto expPtr = std::current_exception();
@@ -383,7 +396,7 @@ int main(int argc, const char *argv[]) {
             }
             catch(const std::exception& e) //it would not work if you pass by value
             {
-                cout << "exception ??? " ;
+                cout << "exception main ??? " ;
                 std::cout << e.what() << endl;
             }
         }
