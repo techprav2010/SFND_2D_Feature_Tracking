@@ -48,8 +48,8 @@ vector<Config2DFeatTrack> getConfig(bool singleTest) {
 
             for (auto descriptorType:descriptorTypes) // start
             {
-                if (descriptorType.compare("AKAZE") == 0)
-                    continue;
+//                if (descriptorType.compare("AKAZE") == 0)
+//                    continue;
 
                 for (auto matcherType:matcherTypes) {
                     for (auto matcherTypeMetric:matcherTypeMetrics) {
