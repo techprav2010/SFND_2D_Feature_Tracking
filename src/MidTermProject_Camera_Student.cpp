@@ -200,7 +200,7 @@ int run_2D_tracking(Config2DFeatTrack &config2d, AuditLog &audit) {
         cv::cvtColor(img, imgGray, cv::COLOR_BGR2GRAY);
 
         //audit
-        audit.image_name = imgNumber.str();
+        audit.image_name = imgFullFilename;
         //// STUDENT ASSIGNMENT
         //// TASK MP.1 -> replace the following code with ring buffer of size dataBufferSize
 
