@@ -31,12 +31,15 @@ void matchDescriptors(std::vector<cv::KeyPoint> &kPtsSource, std::vector<cv::Key
         int normType = cv::NORM_HAMMING;
         matcher = cv::BFMatcher::create(normType, crossCheck);
     } else if (matcherType.compare("MAT_FLANN") == 0) {
-        if (descSource.type() !=  CV_32F) {
-            converted_CV_32F = true;
-            // OpenCV bug workaround : convert binary descriptors to floating point due to a bug in current OpenCV implementation
-            descSource.convertTo(descSource, CV_32F);
-            descRef.convertTo(descRef, CV_32F);
-        }
+//        if (descSource.type() !=  CV_32F) {
+//            converted_CV_32F = true;
+//            // OpenCV bug workaround : convert binary descriptors to floating point due to a bug in current OpenCV implementation
+//            descSource.convertTo(descSource, CV_32F);
+//            descRef.convertTo(descRef, CV_32F);
+//        }
+        // OpenCV bug workaround : convert binary descriptors to floating point due to a bug in current OpenCV implementation
+        descSource.convertTo(descSource, CV_32F);
+        descRef.convertTo(descRef, CV_32F);
         matcher = cv::DescriptorMatcher::create(cv::DescriptorMatcher::FLANNBASED);
     }
 
@@ -48,13 +51,6 @@ void matchDescriptors(std::vector<cv::KeyPoint> &kPtsSource, std::vector<cv::Key
         audit.match_keypoints_size = matches.size();
 
     } else if (selectorType.compare("SEL_KNN") == 0) { // k nearest neighbors (k=2)
-        if (!converted_CV_32F && descSource.type() !=  CV_32F) {
-            converted_CV_32F = true;
-            // OpenCV bug workaround : convert binary descriptors to floating point due to a bug in current OpenCV implementation
-            descSource.convertTo(descSource, CV_32F);
-            descRef.convertTo(descRef, CV_32F);
-        }
-
         vector<vector<cv::DMatch>> knn_matches;
         matcher->knnMatch(descSource, descRef, knn_matches, 2);
         double minDescDistRatio = 0.8;
