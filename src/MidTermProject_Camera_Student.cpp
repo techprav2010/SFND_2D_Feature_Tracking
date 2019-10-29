@@ -356,6 +356,16 @@ int main(int argc, const char *argv[]) {
             audit.isError = true;
             log(audit);
             log_audit(detector_file, audit);
+            try
+            {
+                auto expPtr = std::current_exception();
+                if(expPtr) std::rethrow_exception(expPtr);
+            }
+            catch(const std::exception& e) //it would not work if you pass by value
+            {
+                cout << "exception ??? " ;
+                std::cout << e.what() << endl;
+            }
         }
     }
 //    log_audits(audits);
