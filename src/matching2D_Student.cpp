@@ -64,7 +64,7 @@ void matchDescriptors(std::vector<cv::KeyPoint> &kPtsSource, std::vector<cv::Key
     t = ((double) cv::getTickCount() - t) / cv::getTickFrequency();
     cout << selectorType << " with n=" << matches.size() << " matches in " << 1000 * t / 1.0 << " ms" << endl;
     //audit: time
-    audit.desc_time = 1000 * t / 1.0;
+    audit.match_time = 1000 * t / 1.0;
 }
 
 // Use one of several types of state-of-art descriptors to uniquely identify keypoints

@@ -76,6 +76,7 @@ vector<Config2DFeatTrack> getConfig(bool singleTest) {
 void log(AuditLog &audit) {
 
     cout << "{" << endl;
+    cout << "isError:" << audit.isError << endl;
     cout << "detectorType:" << audit.config.detectorType << endl;
     cout << "descriptorType:" << audit.config.descriptorType << endl;
     cout << "matcherType:" << audit.config.matcherType << endl;
@@ -99,7 +100,7 @@ void log(AuditLog &audit) {
 
 void log_audit_header(ofstream &detector_file) {
     detector_file << "error";
-    detector_file << "detectorType";
+    detector_file << "," << "detectorType";
     detector_file << "," << "descriptorType";
     detector_file << "," << "matcherType";
     detector_file << "," << "matcherTypeMetric";
@@ -121,7 +122,7 @@ void log_audit_header(ofstream &detector_file) {
 void log_audit(ofstream &detector_file, AuditLog &audit) {
 
     detector_file << audit.isError;
-    detector_file << audit.config.detectorType;
+    detector_file << "," << audit.config.detectorType;
     detector_file << "," << audit.config.descriptorType;
     detector_file << "," << audit.config.matcherType;
     detector_file << "," << audit.config.matcherTypeMetric;
