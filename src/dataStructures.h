@@ -30,6 +30,7 @@ struct Config2DFeatTrack {
 struct AuditLog {
     Config2DFeatTrack config ;
     std::string image_name;
+    bool isError=false;
     long match_time, match_keypoints_size, match_removed_keypoints_size;
     long desc_time;
     long detect_time, detect_keypoints_size, detect_removed_keypoints_size;
