@@ -80,12 +80,12 @@ vector<Config2DFeatTrack> getConfig(bool singleTest) {
 }
 
 /* MAIN PROGRAM */
-int run_2D_tracking(Config2DFeatTrack config, vector<AuditLog> audits)
+int run_2D_tracking(Config2DFeatTrack &config2d, vector<AuditLog> &audits)
 {
 
     /* INIT VARIABLES AND DATA STRUCTURES */
     AuditLog audit;
-    audit.config = config;
+    audit.config = config2d;
     audits.push_back(audit);
 
     // data location
@@ -143,7 +143,7 @@ int run_2D_tracking(Config2DFeatTrack config, vector<AuditLog> audits)
 
         // extract 2D keypoints from current image
         vector<cv::KeyPoint> keypoints; // create empty feature list for current image
-        string detectorType = config.detectorType ;//"SHITOMASI";
+        string detectorType = config2d.detectorType ;//"SHITOMASI";
 
         //// STUDENT ASSIGNMENT
         //// TASK MP.2 -> add the following keypoint detectors in file matching2D.cpp and enable string-based selection based on detectorType
@@ -159,16 +159,16 @@ int run_2D_tracking(Config2DFeatTrack config, vector<AuditLog> audits)
 
         if (detectorType.compare("SHITOMASI") == 0)
         {
-            detKeypointsShiTomasi(keypoints, imgGray, config , audit , false);
+            detKeypointsShiTomasi(keypoints, imgGray, config2d , audit , false);
         }
         else if (detectorType.compare("HARRIS") == 0)
         {
-            detKeypointsHarris(keypoints, imgGray, config , audit, false);
+            detKeypointsHarris(keypoints, imgGray, config2d , audit, false);
         }
         else
         {
             // FAST, BRISK, ORB, AKAZE, SIFT
-            detKeypointsModern(keypoints, imgGray, detectorType, config , audit, false);
+            detKeypointsModern(keypoints, imgGray, detectorType, config2d , audit, false);
         }
         //// EOF STUDENT ASSIGNMENT
 
@@ -192,10 +192,10 @@ int run_2D_tracking(Config2DFeatTrack config, vector<AuditLog> audits)
         //// EOF STUDENT ASSIGNMENT
 
         // optional : limit number of keypoints (helpful for debugging and learning)
-        bool bLimitKpts = config.bLimitKpts;//false;
+        bool bLimitKpts = config2d.bLimitKpts;//false;
         if (bLimitKpts)
         {
-            int maxKeypoints = config.maxKeypoints ;// 50;
+            int maxKeypoints = config2d.maxKeypoints ;// 50;
 
             if (detectorType.compare("SHITOMASI") == 0)
             { // there is no response info, so keep the first 50 as they are sorted in descending quality order
@@ -217,7 +217,7 @@ int run_2D_tracking(Config2DFeatTrack config, vector<AuditLog> audits)
 
         cv::Mat descriptors;
         string descriptorType = "BRISK"; // BRIEF, ORB, FREAK, AKAZE, SIFT
-        descKeypoints((dataBuffer.end() - 1)->keypoints, (dataBuffer.end() - 1)->cameraImg, descriptors, descriptorType, config , audit);
+        descKeypoints((dataBuffer.end() - 1)->keypoints, (dataBuffer.end() - 1)->cameraImg, descriptors, descriptorType, config2d , audit);
         //// EOF STUDENT ASSIGNMENT
 
         // push descriptors for current frame to end of data buffer
@@ -232,9 +232,9 @@ int run_2D_tracking(Config2DFeatTrack config, vector<AuditLog> audits)
 
             vector<cv::DMatch> matches;
 
-            string matcherType = confg.matcherType ;//"MAT_BF";        // MAT_BF, MAT_FLANN
-            string descriptorType = confg.matcherTypeMetric ;//"DES_BINARY"; // DES_BINARY, DES_HOG
-            string selectorType = confg.matcherTypeSelector ;//"SEL_NN";       // SEL_NN, SEL_KNN
+            string matcherType = config2d.matcherType ;//"MAT_BF";        // MAT_BF, MAT_FLANN
+            string descriptorType = config2d.matcherTypeMetric ;//"DES_BINARY"; // DES_BINARY, DES_HOG
+            string selectorType = config2d.matcherTypeSelector ;//"SEL_NN";       // SEL_NN, SEL_KNN
 
             //// STUDENT ASSIGNMENT
             //// TASK MP.5 -> add FLANN matching in file matching2D.cpp
@@ -242,7 +242,7 @@ int run_2D_tracking(Config2DFeatTrack config, vector<AuditLog> audits)
 
             matchDescriptors((dataBuffer.end() - 2)->keypoints, (dataBuffer.end() - 1)->keypoints,
                              (dataBuffer.end() - 2)->descriptors, (dataBuffer.end() - 1)->descriptors,
-                             matches, descriptorType, matcherType, selectorType, config , audit);
+                             matches, descriptorType, matcherType, selectorType, config2d , audit);
 
             //// EOF STUDENT ASSIGNMENT
 
@@ -252,7 +252,7 @@ int run_2D_tracking(Config2DFeatTrack config, vector<AuditLog> audits)
             cout << "#4 : MATCH KEYPOINT DESCRIPTORS done" << endl;
 
             // visualize matches between current and previous image
-            bVis = config.bVis; //true;
+            bVis = config2d.bVis; //true;
             if (bVis)
             {
                 cv::Mat matchImg = ((dataBuffer.end() - 1)->cameraImg).clone();
@@ -280,9 +280,11 @@ int run_2D_tracking(Config2DFeatTrack config, vector<AuditLog> audits)
 int main(int argc, const char *argv[])
 {
     bool singleTest=false;
+     //int run_2D_tracking(Config2DFeatTrack &config, vector<AuditLog> &audits)
+    vector<AuditLog> audits;
     vector<Config2DFeatTrack> configList = getConfig(singleTest);
-    for(auto it=configList.begin(); it != configList.end(); ++it){
-        run_2D_tracking( (*it) );
+    for(auto config2d=configList.begin(); config2d != configList.end(); ++config2d){
+        run_2D_tracking( (*config2d), audits );
     }
 
 }
