@@ -187,6 +187,8 @@ int run_2D_tracking(Config2DFeatTrack &config2d, vector<AuditLog> audits, ofstre
 
     for (size_t imgIndex = 0; imgIndex <= imgEndIndex - imgStartIndex; imgIndex++) {
         /* LOAD IMAGE INTO BUFFER */
+
+        //audit logs
         AuditLog audit;
         audit.config = config2d;
         audits.push_back(audit);
@@ -345,6 +347,11 @@ int run_2D_tracking(Config2DFeatTrack &config2d, vector<AuditLog> audits, ofstre
                 bVis = false;
             }
 
+
+
+            //audit logs
+            log(detector_file_json, audit);
+            log_audit(detector_file, audit);
 
         } catch (...) {
             cout << "exception happened" << endl;
