@@ -78,6 +78,7 @@ void log(ofstream &detector_file, AuditLog &audit) {
     detector_file << "{" << endl;
 
     detector_file << "isError:" << audit.isError << endl;
+    detector_file << "image_name:" << audit.image_name << endl;
     detector_file << "detectorType:" << audit.config.detectorType << endl;
     detector_file << "descriptorType:" << audit.config.descriptorType << endl;
     detector_file << "matcherType:" << audit.config.matcherType << endl;
@@ -104,6 +105,7 @@ void log(ofstream &detector_file, AuditLog &audit) {
 void log_audit_header(ofstream &detector_file) {
     detector_file << "error";
 
+    detector_file << "," << "image_name";
     detector_file << "," << "detectorType";
     detector_file << "," << "descriptorType";
 
@@ -130,6 +132,7 @@ void log_audit(ofstream &detector_file, AuditLog &audit) {
 
     detector_file << audit.isError;
 
+    detector_file << "," << audit.image_name;
     detector_file << "," << audit.config.detectorType;
     detector_file << "," << audit.config.descriptorType;
     detector_file << "," << audit.config.matcherType;
