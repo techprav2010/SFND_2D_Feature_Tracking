@@ -79,14 +79,67 @@ vector<Config2DFeatTrack> getConfig(bool singleTest) {
     return configList;
 }
 
+
+void log(AuditLog &audit) {
+
+    cout << "{" << endl;
+    cout << "detectorType:"<< audit.config.detectorType << endl;
+    cout << "descriptorType:"<< audit.config.descriptorType << endl;
+    cout << "matcherType:"<< audit.config.matcherType << endl;
+    cout << "matcherTypeMetric:"<< audit.config.matcherTypeMetric << endl;
+    cout << "matcherTypeSelector:"<< audit.config.matcherTypeSelector << endl;
+    cout << "bVis:"<< audit.config.bVis << endl;
+    cout << "bLimitKpts:"<< audit.config.bLimitKpts << endl;
+    cout << "maxKeypoints:"<< audit.config.maxKeypoints << endl;
+
+    cout << "match_time:"<< audit.match_time << endl;
+    cout << "match_keypoints_size:"<< audit.match_keypoints_size << endl;
+    cout << "match_removed_keypoints_size:"<< audit.match_removed_keypoints_size << endl;
+
+    cout << "desc_time:"<< audit.desc_time << endl;
+
+    cout << "detect_time:"<< audit.detect_time << endl;
+    cout << "detect_keypoints_size:"<< audit.detect_keypoints_size << endl;
+
+    cout << "}" << endl;
+}
+
+void log_audit(ofstream &detector_file, AuditLog &audit){
+
+    detector_file << audit.config.detectorType  ;
+    detector_file << ","<< audit.config.descriptorType ;
+    detector_file << ","<<audit.config.matcherType;
+    detector_file << ","<< audit.config.matcherTypeMetric ;
+    detector_file << ","<< audit.config.matcherTypeSelector ;
+    detector_file << ","<<audit.config.bVis ;
+    detector_file << ","<<audit.config.bLimitKpts;
+    detector_file << ","<<audit.config.maxKeypoints;
+
+    detector_file << ","<< audit.match_time ;
+    detector_file << ","<<audit.match_keypoints_size;
+    detector_file << ","<< audit.match_removed_keypoints_size ;
+
+    detector_file << ","<<audit.desc_time ;
+
+    detector_file << ","<<audit.detect_time ;
+    detector_file << ","<< audit.detect_keypoints_size << endl;
+}
+
+void log_audits(vector<AuditLog> &audits){
+    ofstream detector_file;
+    detector_file.open ("../audit_logs.csv");
+    for(auto audit=audits.begin(); audit != audits.end(); ++audit)
+    {
+        log_audit(detector_file, (*audit));
+    }
+}
+
 /* MAIN PROGRAM */
-int run_2D_tracking(Config2DFeatTrack &config2d, vector<AuditLog> &audits)
+int run_2D_tracking(Config2DFeatTrack &config2d,  AuditLog &audit)
 {
 
     /* INIT VARIABLES AND DATA STRUCTURES */
-    AuditLog audit;
-    audit.config = config2d;
-    audits.push_back(audit);
+
 
     // data location
     string dataPath = "../";
@@ -283,8 +336,19 @@ int main(int argc, const char *argv[])
      //int run_2D_tracking(Config2DFeatTrack &config, vector<AuditLog> &audits)
     vector<AuditLog> audits;
     vector<Config2DFeatTrack> configList = getConfig(singleTest);
-    for(auto config2d=configList.begin(); config2d != configList.end(); ++config2d){
-        run_2D_tracking( (*config2d), audits );
+    for(auto config2d=configList.begin(); config2d != configList.end(); ++config2d)
+    {
+        AuditLog audit;
+        audit.config = (*config2d);
+        audits.push_back(audit);
+        try {
+            run_2D_tracking( (*config2d), audit );
+            log(audit);
+        } catch (...) {
+            cout << "exception happened" << endl;
+            log(audit);
+        }
     }
+    log_audits(audits);
 
 }
