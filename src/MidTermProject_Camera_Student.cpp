@@ -104,6 +104,26 @@ void log(AuditLog &audit) {
     cout << "}" << endl;
 }
 
+void log_audit_header(ofstream &detector_file ) {
+    detector_file << "detectorType"  ;
+    detector_file << ","<< "descriptorType" ;
+    detector_file << ","<< "matcherType";
+    detector_file << ","<<  "matcherTypeMetric" ;
+    detector_file << ","<< "matcherTypeSelector" ;
+    detector_file << ","<< "bVis" ;
+    detector_file << ","<< "bLimitKpts";
+    detector_file << ","<< "maxKeypoints";
+
+    detector_file << ","<<  "match_time" ;
+    detector_file << ","<< "match_keypoints_size";
+    detector_file << ","<<  "match_removed_keypoints_size" ;
+
+    detector_file << ","<<"desc_time" ;
+
+    detector_file << ","<< "detect_time" ;
+    detector_file << ","<<  "detect_keypoints_size" << endl;
+}
+
 void log_audit(ofstream &detector_file, AuditLog &audit){
 
     detector_file << audit.config.detectorType  ;
@@ -126,8 +146,7 @@ void log_audit(ofstream &detector_file, AuditLog &audit){
 }
 
 void log_audits(vector<AuditLog> &audits){
-    ofstream detector_file;
-    detector_file.open ("../audit_logs.csv");
+
     for(auto audit=audits.begin(); audit != audits.end(); ++audit)
     {
         log_audit(detector_file, (*audit));
@@ -332,10 +351,14 @@ int run_2D_tracking(Config2DFeatTrack &config2d,  AuditLog &audit)
 
 int main(int argc, const char *argv[])
 {
+    ofstream detector_file;
+    detector_file.open ("../results.csv");
     bool singleTest=false;
      //int run_2D_tracking(Config2DFeatTrack &config, vector<AuditLog> &audits)
-    vector<AuditLog> audits;
     vector<Config2DFeatTrack> configList = getConfig(singleTest);
+    vector<AuditLog> audits;
+    log_audit_header(detector_file);
+
     for(auto config2d=configList.begin(); config2d != configList.end(); ++config2d)
     {
         AuditLog audit;
@@ -344,11 +367,13 @@ int main(int argc, const char *argv[])
         try {
             run_2D_tracking( (*config2d), audit );
             log(audit);
+            log_audit(detector_file, audit);
         } catch (...) {
             cout << "exception happened" << endl;
             log(audit);
+            log_audit(detector_file, audit);
         }
     }
-    log_audits(audits);
-
+//    log_audits(audits);
+    detector_file.close();
 }
