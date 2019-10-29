@@ -76,15 +76,14 @@ vector<Config2DFeatTrack> getConfig(bool singleTest) {
 void log(AuditLog &audit) {
 
     cout << "{" << endl;
+
     cout << "isError:" << audit.isError << endl;
     cout << "detectorType:" << audit.config.detectorType << endl;
     cout << "descriptorType:" << audit.config.descriptorType << endl;
     cout << "matcherType:" << audit.config.matcherType << endl;
+
     cout << "matcherTypeMetric:" << audit.config.matcherTypeMetric << endl;
     cout << "matcherTypeSelector:" << audit.config.matcherTypeSelector << endl;
-    cout << "bVis:" << audit.config.bVis << endl;
-    cout << "bLimitKpts:" << audit.config.bLimitKpts << endl;
-    cout << "maxKeypoints:" << audit.config.maxKeypoints << endl;
 
     cout << "match_time:" << audit.match_time << endl;
     cout << "match_keypoints_size:" << audit.match_keypoints_size << endl;
@@ -95,19 +94,23 @@ void log(AuditLog &audit) {
     cout << "detect_time:" << audit.detect_time << endl;
     cout << "detect_keypoints_size:" << audit.detect_keypoints_size << endl;
 
+
+    cout << "bVis:" << audit.config.bVis << endl;
+    cout << "bLimitKpts:" << audit.config.bLimitKpts << endl;
+    cout << "maxKeypoints:" << audit.config.maxKeypoints << endl;
+
     cout << "}" << endl;
 }
 
 void log_audit_header(ofstream &detector_file) {
     detector_file << "error";
+
     detector_file << "," << "detectorType";
     detector_file << "," << "descriptorType";
+
     detector_file << "," << "matcherType";
     detector_file << "," << "matcherTypeMetric";
     detector_file << "," << "matcherTypeSelector";
-    detector_file << "," << "bVis";
-    detector_file << "," << "bLimitKpts";
-    detector_file << "," << "maxKeypoints";
 
     detector_file << "," << "match_time";
     detector_file << "," << "match_keypoints_size";
@@ -116,20 +119,25 @@ void log_audit_header(ofstream &detector_file) {
     detector_file << "," << "desc_time";
 
     detector_file << "," << "detect_time";
-    detector_file << "," << "detect_keypoints_size" << endl;
+    detector_file << "," << "detect_keypoints_size" ;
+
+    detector_file << "," << "bVis";
+    detector_file << "," << "bLimitKpts";
+    detector_file << "," << "maxKeypoints";
+
+    detector_file  << endl;
 }
 
 void log_audit(ofstream &detector_file, AuditLog &audit) {
 
     detector_file << audit.isError;
+
     detector_file << "," << audit.config.detectorType;
     detector_file << "," << audit.config.descriptorType;
     detector_file << "," << audit.config.matcherType;
     detector_file << "," << audit.config.matcherTypeMetric;
     detector_file << "," << audit.config.matcherTypeSelector;
-    detector_file << "," << audit.config.bVis;
-    detector_file << "," << audit.config.bLimitKpts;
-    detector_file << "," << audit.config.maxKeypoints;
+
 
     detector_file << "," << audit.match_time;
     detector_file << "," << audit.match_keypoints_size;
@@ -138,7 +146,13 @@ void log_audit(ofstream &detector_file, AuditLog &audit) {
     detector_file << "," << audit.desc_time;
 
     detector_file << "," << audit.detect_time;
-    detector_file << "," << audit.detect_keypoints_size << endl;
+    detector_file << "," << audit.detect_keypoints_size ;
+
+    detector_file << "," << audit.config.bVis;
+    detector_file << "," << audit.config.bLimitKpts;
+    detector_file << "," << audit.config.maxKeypoints;
+
+    detector_file   << endl;
 }
 
 //void log_audits(vector<AuditLog> &audits){
