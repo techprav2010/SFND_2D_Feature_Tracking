@@ -18,11 +18,75 @@
 
 using namespace std;
 
+
+vector<Config2DFeatTrack> getConfig(bool singleTest) {
+
+    vector<Config2DFeatTrack> configList;
+    vector<string> detectorTypes = {"SHITOMASI", "HARRIS", "FAST", "BRISK", "ORB", "AKAZE", "SIFT"};
+    vector<string> descriptorTypes = {"BRISK", "BRIEF", "ORB", "FREAK", "AKAZE", "SIFT"};
+
+    vector<string> matcherTypes = {"MAT_BF", "MAT_FLANN"};
+    vector<string> matcherTypeMetrics = {"DES_BINARY", "DES_HOG"};
+    vector<string> matcherTypeSelectors = {"SEL_NN", "SEL_KNN"};
+
+    if(singleTest)
+    {
+        Config2DFeatTrack config;
+        config.detectorType = detectorTypes[0];
+        config.descriptorType = descriptorTypes[0];
+        config.matcherType = matcherTypes[0];
+        config.matcherTypeMetric = matcherTypeMetrics[0];
+        config.matcherTypeSelector = matcherTypeSelectors[0];
+
+        config.bVis =true;
+        config.bLimitKpts = true;
+        config.maxKeypoints = 50;
+
+        configList.push_back(config);
+    }
+    else
+    {
+        for (auto detectorType:detectorTypes)
+        {
+            bool write_detector = false;
+
+            for (auto descriptorType:descriptorTypes) // start
+            {
+                if (descriptorType.compare("AKAZE") == 0)
+                    continue;
+
+                for (auto matcherType:matcherTypes)
+                {
+                    for (auto matcherTypeMetric:matcherTypeMetrics)
+                    {
+                        for (auto matcherTypeSelector:matcherTypeSelectors)
+                        {
+                            Config2DFeatTrack config;
+                            config.detectorType = detectorType;
+                            config.descriptorType = descriptorType;
+                            config.matcherType = matcherType;
+                            config.matcherTypeMetric = matcherTypeMetric;
+                            config.matcherTypeSelector = matcherTypeSelector;
+
+                            configList.push_back(config);
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+    return configList;
+}
+
 /* MAIN PROGRAM */
-int main(int argc, const char *argv[])
+int run_2D_tracking(Config2DFeatTrack config, vector<AuditLog> audits)
 {
 
     /* INIT VARIABLES AND DATA STRUCTURES */
+    AuditLog audit;
+    audit.config = config;
+    audits.push_back(audit);
 
     // data location
     string dataPath = "../";
@@ -56,6 +120,8 @@ int main(int argc, const char *argv[])
         img = cv::imread(imgFullFilename);
         cv::cvtColor(img, imgGray, cv::COLOR_BGR2GRAY);
 
+        //audit
+        audit.image_name = imgNumber.str();
         //// STUDENT ASSIGNMENT
         //// TASK MP.1 -> replace the following code with ring buffer of size dataBufferSize
 
@@ -77,7 +143,7 @@ int main(int argc, const char *argv[])
 
         // extract 2D keypoints from current image
         vector<cv::KeyPoint> keypoints; // create empty feature list for current image
-        string detectorType = "SHITOMASI";
+        string detectorType = config.detectorType ;//"SHITOMASI";
 
         //// STUDENT ASSIGNMENT
         //// TASK MP.2 -> add the following keypoint detectors in file matching2D.cpp and enable string-based selection based on detectorType
@@ -93,16 +159,16 @@ int main(int argc, const char *argv[])
 
         if (detectorType.compare("SHITOMASI") == 0)
         {
-            detKeypointsShiTomasi(keypoints, imgGray, false);
+            detKeypointsShiTomasi(keypoints, imgGray, config , audit , false);
         }
         else if (detectorType.compare("HARRIS") == 0)
         {
-            detKeypointsHarris(keypoints, imgGray, false);
+            detKeypointsHarris(keypoints, imgGray, config , audit, false);
         }
         else
         {
             // FAST, BRISK, ORB, AKAZE, SIFT
-            detKeypointsModern(keypoints, imgGray, detectorType, false);
+            detKeypointsModern(keypoints, imgGray, detectorType, config , audit, false);
         }
         //// EOF STUDENT ASSIGNMENT
 
@@ -126,10 +192,10 @@ int main(int argc, const char *argv[])
         //// EOF STUDENT ASSIGNMENT
 
         // optional : limit number of keypoints (helpful for debugging and learning)
-        bool bLimitKpts = false;
+        bool bLimitKpts = config.bLimitKpts;//false;
         if (bLimitKpts)
         {
-            int maxKeypoints = 50;
+            int maxKeypoints = config.maxKeypoints ;// 50;
 
             if (detectorType.compare("SHITOMASI") == 0)
             { // there is no response info, so keep the first 50 as they are sorted in descending quality order
@@ -151,7 +217,7 @@ int main(int argc, const char *argv[])
 
         cv::Mat descriptors;
         string descriptorType = "BRISK"; // BRIEF, ORB, FREAK, AKAZE, SIFT
-        descKeypoints((dataBuffer.end() - 1)->keypoints, (dataBuffer.end() - 1)->cameraImg, descriptors, descriptorType);
+        descKeypoints((dataBuffer.end() - 1)->keypoints, (dataBuffer.end() - 1)->cameraImg, descriptors, descriptorType, config , audit);
         //// EOF STUDENT ASSIGNMENT
 
         // push descriptors for current frame to end of data buffer
@@ -165,9 +231,10 @@ int main(int argc, const char *argv[])
             /* MATCH KEYPOINT DESCRIPTORS */
 
             vector<cv::DMatch> matches;
-            string matcherType = "MAT_BF";        // MAT_BF, MAT_FLANN
-            string descriptorType = "DES_BINARY"; // DES_BINARY, DES_HOG
-            string selectorType = "SEL_NN";       // SEL_NN, SEL_KNN
+
+            string matcherType = confg.matcherType ;//"MAT_BF";        // MAT_BF, MAT_FLANN
+            string descriptorType = confg.matcherTypeMetric ;//"DES_BINARY"; // DES_BINARY, DES_HOG
+            string selectorType = confg.matcherTypeSelector ;//"SEL_NN";       // SEL_NN, SEL_KNN
 
             //// STUDENT ASSIGNMENT
             //// TASK MP.5 -> add FLANN matching in file matching2D.cpp
@@ -175,7 +242,7 @@ int main(int argc, const char *argv[])
 
             matchDescriptors((dataBuffer.end() - 2)->keypoints, (dataBuffer.end() - 1)->keypoints,
                              (dataBuffer.end() - 2)->descriptors, (dataBuffer.end() - 1)->descriptors,
-                             matches, descriptorType, matcherType, selectorType);
+                             matches, descriptorType, matcherType, selectorType, config , audit);
 
             //// EOF STUDENT ASSIGNMENT
 
@@ -185,7 +252,7 @@ int main(int argc, const char *argv[])
             cout << "#4 : MATCH KEYPOINT DESCRIPTORS done" << endl;
 
             // visualize matches between current and previous image
-            bVis = true;
+            bVis = config.bVis; //true;
             if (bVis)
             {
                 cv::Mat matchImg = ((dataBuffer.end() - 1)->cameraImg).clone();
@@ -207,4 +274,15 @@ int main(int argc, const char *argv[])
     } // eof loop over all images
 
     return 0;
+}
+
+
+int main(int argc, const char *argv[])
+{
+    bool singleTest=false;
+    vector<Config2DFeatTrack> configList = getConfig(singleTest);
+    for(auto it=configList.begin(); it != configList.end(); ++it){
+        run_2D_tracking( (*it) );
+    }
+
 }
