@@ -292,7 +292,7 @@ int run_2D_tracking(Config2DFeatTrack &config2d, vector<AuditLog> audits, ofstre
             //// -> BRIEF, ORB, FREAK, AKAZE, SIFT
 
             cv::Mat descriptors;
-            string descriptorType = "BRISK"; // BRIEF, ORB, FREAK, AKAZE, SIFT
+            string descriptorType =  config2d.descriptorType ;//"BRISK"; // BRIEF, ORB, FREAK, AKAZE, SIFT
             descKeypoints((dataBuffer.end() - 1)->keypoints, (dataBuffer.end() - 1)->cameraImg, descriptors, descriptorType,
                           config2d, audit);
             //// EOF STUDENT ASSIGNMENT
@@ -310,7 +310,7 @@ int run_2D_tracking(Config2DFeatTrack &config2d, vector<AuditLog> audits, ofstre
                 vector<cv::DMatch> matches;
 
                 string matcherType = config2d.matcherType;//"MAT_BF";        // MAT_BF, MAT_FLANN
-                string descriptorType = config2d.matcherTypeMetric;//"DES_BINARY"; // DES_BINARY, DES_HOG
+                string matchDescriptorType = config2d.matcherTypeMetric;//"DES_BINARY"; // DES_BINARY, DES_HOG
                 string selectorType = config2d.matcherTypeSelector;//"SEL_NN";       // SEL_NN, SEL_KNN
 
                 //// STUDENT ASSIGNMENT
@@ -319,7 +319,7 @@ int run_2D_tracking(Config2DFeatTrack &config2d, vector<AuditLog> audits, ofstre
 
                 matchDescriptors((dataBuffer.end() - 2)->keypoints, (dataBuffer.end() - 1)->keypoints,
                                  (dataBuffer.end() - 2)->descriptors, (dataBuffer.end() - 1)->descriptors,
-                                 matches, descriptorType, matcherType, selectorType, config2d, audit);
+                                 matches, matchDescriptorType, matcherType, selectorType, config2d, audit);
 
                 //// EOF STUDENT ASSIGNMENT
 
