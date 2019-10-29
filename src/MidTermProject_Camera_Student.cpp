@@ -73,33 +73,33 @@ vector<Config2DFeatTrack> getConfig(bool singleTest) {
 }
 
 
-void log(AuditLog &audit) {
+void log(ofstream &detector_file, AuditLog &audit) {
 
-    cout << "{" << endl;
+    detector_file << "{" << endl;
 
-    cout << "isError:" << audit.isError << endl;
-    cout << "detectorType:" << audit.config.detectorType << endl;
-    cout << "descriptorType:" << audit.config.descriptorType << endl;
-    cout << "matcherType:" << audit.config.matcherType << endl;
+    detector_file << "isError:" << audit.isError << endl;
+    detector_file << "detectorType:" << audit.config.detectorType << endl;
+    detector_file << "descriptorType:" << audit.config.descriptorType << endl;
+    detector_file << "matcherType:" << audit.config.matcherType << endl;
 
-    cout << "matcherTypeMetric:" << audit.config.matcherTypeMetric << endl;
-    cout << "matcherTypeSelector:" << audit.config.matcherTypeSelector << endl;
+    detector_file << "matcherTypeMetric:" << audit.config.matcherTypeMetric << endl;
+    detector_file << "matcherTypeSelector:" << audit.config.matcherTypeSelector << endl;
 
-    cout << "match_time:" << audit.match_time << endl;
-    cout << "match_keypoints_size:" << audit.match_keypoints_size << endl;
-    cout << "match_removed_keypoints_size:" << audit.match_removed_keypoints_size << endl;
+    detector_file << "match_time:" << audit.match_time << endl;
+    detector_file << "match_keypoints_size:" << audit.match_keypoints_size << endl;
+    detector_file << "match_removed_keypoints_size:" << audit.match_removed_keypoints_size << endl;
 
-    cout << "desc_time:" << audit.desc_time << endl;
+    detector_file << "desc_time:" << audit.desc_time << endl;
 
-    cout << "detect_time:" << audit.detect_time << endl;
-    cout << "detect_keypoints_size:" << audit.detect_keypoints_size << endl;
+    detector_file << "detect_time:" << audit.detect_time << endl;
+    detector_file << "detect_keypoints_size:" << audit.detect_keypoints_size << endl;
 
 
-    cout << "bVis:" << audit.config.bVis << endl;
-    cout << "bLimitKpts:" << audit.config.bLimitKpts << endl;
-    cout << "maxKeypoints:" << audit.config.maxKeypoints << endl;
+    detector_file << "bVis:" << audit.config.bVis << endl;
+    detector_file << "bLimitKpts:" << audit.config.bLimitKpts << endl;
+    detector_file << "maxKeypoints:" << audit.config.maxKeypoints << endl;
 
-    cout << "}" << endl;
+    detector_file << "}," << endl;
 }
 
 void log_audit_header(ofstream &detector_file) {
@@ -349,13 +349,20 @@ int run_2D_tracking(Config2DFeatTrack &config2d, AuditLog &audit) {
 
 
 int main(int argc, const char *argv[]) {
+
     ofstream detector_file;
     detector_file.open("../results.csv");
+
+    ofstream detector_file_json;
+    detector_file_json.open("../results.json");
+    detector_file_json << "{" << endl;
+
     bool singleTest = false;
     //int run_2D_tracking(Config2DFeatTrack &config, vector<AuditLog> &audits)
     vector<Config2DFeatTrack> configList = getConfig(singleTest);
     vector<AuditLog> audits;
     log_audit_header(detector_file);
+
 
     for (auto config2d = configList.begin(); config2d != configList.end(); ++config2d) {
         AuditLog audit;
@@ -363,12 +370,12 @@ int main(int argc, const char *argv[]) {
         audits.push_back(audit);
         try {
             run_2D_tracking((*config2d), audit);
-            log(audit);
+            log(detector_file_json, audit);
             log_audit(detector_file, audit);
         } catch (...) {
             cout << "exception happened" << endl;
             audit.isError = true;
-            log(audit);
+            log(detector_file_json, audit);
             log_audit(detector_file, audit);
             try
             {
@@ -382,6 +389,9 @@ int main(int argc, const char *argv[]) {
             }
         }
     }
+
 //    log_audits(audits);
+    detector_file_json << "}" << endl;
     detector_file.close();
+    detector_file_json.close();
 }
